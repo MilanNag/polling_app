@@ -1,0 +1,243 @@
+{
+  "info": {
+    "name": "Team Polls API",
+    "description": "API collection for Team Polls real-time polling application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Create Anonymous User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/anon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "anon"
+              ]
+            },
+            "description": "Creates an anonymous user and returns a JWT token"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Polls",
+      "item": [
+        {
+          "name": "Create Poll",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What's your favorite programming language?\",\n  \"options\": [\"JavaScript\", \"Python\", \"Java\", \"C#\", \"Other\"],\n  \"expiresAt\": \"{{expiresAt}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/poll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "poll"
+              ]
+            },
+            "description": "Creates a new poll"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Poll Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/poll/{{pollId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "poll",
+                "{{pollId}}"
+              ]
+            },
+            "description": "Gets poll details and current results"
+          },
+          "response": []
+        },
+        {
+          "name": "Cast Vote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"optionIndex\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/poll/{{pollId}}/vote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "poll",
+                "{{pollId}}",
+                "vote"
+              ]
+            },
+            "description": "Cast a vote for a specific option"
+          },
+          "response": []
+        }
+      ],
+      "description": "Poll management endpoints"
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Checks if the API is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/metrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "metrics"
+              ]
+            },
+            "description": "Gets Prometheus-formatted metrics"
+          },
+          "response": []
+        }
+      ],
+      "description": "Health and monitoring endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set expires at to 1 hour from now if not already set",
+          "if (!pm.variables.get('expiresAt')) {",
+          "    const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);",
+          "    pm.variables.set('expiresAt', oneHourFromNow.toISOString());",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-capture authentication token from anonymous user creation",
+          "if (pm.response.code === 201 && pm.request.url.path.includes('/auth/anon')) {",
+          "    const responseData = pm.response.json();",
+          "    if (responseData && responseData.token) {",
+          "        pm.variables.set('token', responseData.token);",
+          "        console.log('Saved token: ' + responseData.token);",
+          "    }",
+          "}",
+          "",
+          "// Auto-capture poll ID from poll creation",
+          "if (pm.response.code === 201 && pm.request.url.path.includes('/poll') && !pm.request.url.path.includes('/vote')) {",
+          "    const responseData = pm.response.json();",
+          "    if (responseData && responseData.id) {",
+          "        pm.variables.set('pollId', responseData.id);",
+          "        console.log('Saved poll ID: ' + responseData.id);",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pollId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expiresAt",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
