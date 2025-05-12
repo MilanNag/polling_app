@@ -1,11 +1,21 @@
 import http from 'http';
 import app from './app';
+const socketIo = require('socket.io');
 
 // Get port from environment or use default
 const PORT = process.env.PORT || 3000;
 
 // Create HTTP server
 const server = http.createServer(app);
+
+const io = socketIo(server);
+
+io.on('connection', (socket: any) => {
+  console.log('a user connected');
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
 
 // Start the server
 server.listen(PORT, () => {
